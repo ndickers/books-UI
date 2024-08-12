@@ -1,6 +1,8 @@
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
-
+import { useResetPassMutation } from "../features/api/bookApi";
+import { toast } from "react-toastify";
+import Spinner from "../components/Spinner";
 interface FormData {
   email: string;
 }
@@ -10,11 +12,24 @@ export default function Reset() {
     handleSubmit,
     formState: { errors },
   } = useForm<FormData>();
-
-  function handleReset(data: FormData) {
-    console.log(data);
-    console.log(errors.email?.message);
+  const [resetPass, { data: response, isError, isSuccess, isLoading, error }] =
+    useResetPassMutation();
+  async function handleReset(data: FormData) {
+    try {
+      const result = await resetPass(data).unwrap();
+      console.log({ result });
+    } catch (error) {
+      console.log(error);
+    }
   }
+
+  if (isSuccess) {
+    toast.success(response.message);
+  }
+  if (isError) {
+    toast.error((error as any).data.error);
+  }
+
   return (
     <div className="mt-7 w-[28rem] m-auto h-full mt-24 bg-white border border-gray-200 rounded-xl shadow-sm">
       <div className="p-4 sm:p-7">
@@ -90,6 +105,7 @@ export default function Reset() {
           </form>
         </div>
       </div>
+      {isLoading && <Spinner />}
     </div>
   );
 }

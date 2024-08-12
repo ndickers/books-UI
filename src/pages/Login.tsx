@@ -1,5 +1,10 @@
-import { SubmitHandler, useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { Link, useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../app/hooks";
+import { login } from "../features/Auth/AuthSlice";
+import Spinner from "../components/Spinner";
+import { useEffect } from "react";
+import { toast } from "react-toastify";
 
 interface FormData {
   email: string;
@@ -11,9 +16,24 @@ export default function Login() {
     handleSubmit,
     formState: { errors },
   } = useForm<FormData>();
-  function handleLogin(data: FormData) {
-    console.log(data);
+  const { user, token, loading, error } = useAppSelector(
+    (state) => state.login
+  );
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  useEffect(() => {
+    if (user) {
+      toast.success("Login successful");
+      navigate("/books");
+    }
+  }, [navigate, user]);
+
+  async function handleLogin(data: FormData) {
+    const result = await dispatch(login(data)).unwrap();
+    console.log({ result });
   }
+
+  console.log({ user, token, loading, error });
 
   return (
     <div className="mt-7 max-w-[28rem] mx-auto my-auto bg-white border border-gray-200 rounded-xl shadow-sm">
@@ -35,7 +55,9 @@ export default function Login() {
           <div className="py-3 flex items-center text-xs text-gray-400 uppercase before:flex-1 before:border-t before:border-gray-200 before:me-6 after:flex-1 after:border-t after:border-gray-200 after:ms-6">
             Or
           </div>
-
+          <p className="text-center font-medium  text-red-500 my-4">
+            {error !== null && (error as string)}
+          </p>
           <form onSubmit={handleSubmit(handleLogin)} noValidate>
             <div className="grid gap-y-4">
               <div>
@@ -155,6 +177,7 @@ export default function Login() {
           </form>
         </div>
       </div>
+      {loading && <Spinner />}
     </div>
   );
 }

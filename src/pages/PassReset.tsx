@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { useUpdatePassMutation } from "../features/api/bookApi";
+import { toast } from "react-toastify";
+import Spinner from "../components/Spinner";
 
 interface FormData {
   password: string;
@@ -14,17 +17,36 @@ export default function PassReset() {
     watch,
   } = useForm<FormData>();
   const [passMatch, setPassMatch] = useState<string | undefined>(undefined);
-
+  const [updatePass, { data: response, error, isError, isLoading, isSuccess }] =
+    useUpdatePassMutation();
+  const [searchParam] = useSearchParams();
+  const token = searchParam.get("token");
   const password = watch("password");
   const confirmPass = watch("confirmPass");
 
-  function handleChangePass(data: FormData) {
+  async function handleChangePass(data: FormData) {
     if (password !== confirmPass) {
       setPassMatch("Password does not match the password");
     } else {
       setPassMatch(undefined);
-      console.log({ data });
+      try {
+        console.log({ token, password: data.password });
+
+        const result = await updatePass({
+          token: token as string,
+          password: data.password,
+        });
+        console.log(result);
+      } catch (error) {
+        console.log(error);
+      }
     }
+  }
+  if (isSuccess) {
+    toast.success(response.message);
+  }
+  if (isError) {
+    toast.error((error as any).data.error);
   }
 
   return (
@@ -161,6 +183,7 @@ export default function PassReset() {
           </form>
         </div>
       </div>
+      {isLoading && <Spinner />}
     </div>
   );
 }

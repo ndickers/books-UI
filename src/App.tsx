@@ -7,6 +7,9 @@ import Reset from "./pages/Reset";
 import Home from "./pages/Home";
 import ErrorPage from "./pages/ErrorPage";
 import PassReset from "./pages/PassReset";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import Confirm from "./pages/Confirm";
 declare global {
   interface Window {
     HSStaticMethods: IStaticMethods;
@@ -27,6 +30,7 @@ const router = createBrowserRouter([
     path: "/reset-password",
     element: <Reset />,
   },
+  { path: "/confirmation", element: <Confirm /> },
   {
     path: "/reset-password/reset",
     element: <PassReset />,
@@ -36,9 +40,10 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <>
+    <div>
       <RouterProvider router={router} />
-    </>
+      <ToastContainer />
+    </div>
   );
 }
 

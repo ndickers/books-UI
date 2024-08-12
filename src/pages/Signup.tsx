@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useRegisterUserMutation } from "../features/api/bookApi";
+import Spinner from "../components/Spinner";
+import { toast } from "react-toastify";
 
 interface FormData {
   email: string;
@@ -15,7 +18,10 @@ export default function Signup() {
     watch,
     formState: { errors },
   } = useForm<FormData>();
+  const [registerUser, { data, isError, isLoading, error }] =
+    useRegisterUserMutation();
   const [passMatch, setPassMatch] = useState<string | undefined>(undefined);
+  const navigate = useNavigate();
   const [password, confirmPass] = watch(["password", "confirmPass"]);
 
   function handleChange() {
@@ -26,14 +32,23 @@ export default function Signup() {
     }
   }
 
-  function handleUpdatePass(data: FormData) {
+  async function handleUpdatePass(data: FormData) {
     if (password !== confirmPass) {
       setPassMatch("confirm password does not match with password");
     } else {
       setPassMatch(undefined);
+      try {
+        const result = await registerUser(data).unwrap();
+        toast.success("confirm your email");
+
+        navigate("/login");
+        console.log({ inner: result });
+      } catch (error) {}
       console.log(data);
     }
   }
+  console.log({ data });
+
   return (
     <div className="mt-7 max-w-[28rem] m-auto bg-white border border-gray-200 rounded-xl shadow-sm">
       <div className="p-4 sm:p-7">
@@ -54,7 +69,13 @@ export default function Signup() {
           <div className="py-3 flex items-center text-xs text-gray-400 uppercase before:flex-1 before:border-t before:border-gray-200 before:me-6 after:flex-1 after:border-t after:border-gray-200 after:ms-6">
             Or
           </div>
+          <p className="text-center font-medium  text-green-500 my-4">
+            {data !== undefined && data.message}
+          </p>
 
+          <p className="text-center font-medium  text-red-500 my-4">
+            {isError && "data" in error && (error as any).data.message}
+          </p>
           <form onSubmit={handleSubmit(handleUpdatePass)} noValidate>
             <div className="grid gap-y-4">
               <div>
@@ -249,6 +270,7 @@ export default function Signup() {
           </form>
         </div>
       </div>
+      {isLoading && <Spinner />}
     </div>
   );
 }
