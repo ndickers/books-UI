@@ -56,7 +56,7 @@ export default function Login() {
             Or
           </div>
           <p className="text-center font-medium  text-red-500 my-4">
-            {error !== null && (error as string)}
+            {error !== null && typeof error !== "object" && (error as string)}
           </p>
           <form onSubmit={handleSubmit(handleLogin)} noValidate>
             <div className="grid gap-y-4">
