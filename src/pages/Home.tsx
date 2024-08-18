@@ -1,19 +1,25 @@
 import { useForm } from "react-hook-form";
 import {
   useCreateBookMutation,
+  useDeleteBookMutation,
   useGetUserBooksQuery,
+  useUpdateBookMutation,
 } from "../features/api/bookApi";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { logout } from "../features/Auth/AuthSlice";
 import Spinner from "../components/Spinner";
 import { toast } from "react-toastify";
+import { useState } from "react";
 
 interface TBook {
   title: string;
   author: string;
   year: number;
 }
-
+interface TUpdate {
+  isUpdate: boolean;
+  bookId: null | number;
+}
 export interface TUser {
   id: number;
   email: string;
@@ -21,12 +27,20 @@ export interface TUser {
 }
 export default function Home() {
   const user: TUser | null = useAppSelector((state) => state.login.user)!;
+
+  const [updateBook, { isError: isUpdateError, isLoading: isUpdateLoading }] =
+    useUpdateBookMutation();
+  const [edit, setEdit] = useState<TUpdate>({
+    isUpdate: false,
+    bookId: null,
+  });
   const {
     data: books,
     error,
     isError,
     isLoading,
   } = useGetUserBooksQuery((user as TUser).id);
+  const [deleteBook, { isLoading: deleteIsLoading }] = useDeleteBookMutation();
   const [
     createBook,
     {
@@ -40,21 +54,33 @@ export default function Home() {
 
   const {
     handleSubmit,
+    reset,
     register,
     formState: { errors },
   } = useForm<TBook>();
 
   async function submitBook(data: TBook) {
     data.year = Number(data.year);
-    console.log(data);
-    const bookData = {
-      ...data,
-      user_id: (user as TUser).id,
-    };
-    try {
-      await createBook(bookData);
-    } catch (error) {
-      console.log(error);
+
+    if (edit.isUpdate) {
+      try {
+        await updateBook({ id: edit.bookId, data });
+        setEdit({ isUpdate: false, bookId: null });
+        reset();
+      } catch (error) {
+        console.log(error);
+      }
+    } else {
+      const bookData = {
+        ...data,
+        user_id: (user as TUser).id,
+      };
+      try {
+        await createBook(bookData);
+        reset();
+      } catch (error) {
+        console.log(error);
+      }
     }
   }
   if (isLoading) {
@@ -83,8 +109,32 @@ export default function Home() {
           <td className="td-style">{book.author}</td>
           <td className="td-style">{book.year}</td>
           <td className="td-style">
-            <button className="btn-style">delete</button>
-            <button className="btn-style ml-1">edit</button>
+            <button
+              className="btn-style"
+              onClick={async () => {
+                try {
+                  const result = await deleteBook(book.id).unwrap();
+                  console.log({ delete: result });
+                } catch (error) {
+                  console.log(error);
+                }
+              }}
+            >
+              delete
+            </button>
+            <button
+              className="btn-style ml-1"
+              onClick={() => {
+                reset({
+                  title: book.title,
+                  author: book.author,
+                  year: book.year,
+                });
+                setEdit({ isUpdate: true, bookId: book.id });
+              }}
+            >
+              edit
+            </button>
           </td>
         </tr>
       )
@@ -207,7 +257,7 @@ export default function Home() {
           </div>
           <br />
           <button className="bg-blue-400 rounded-md text-white px-4 py-2">
-            submit
+            {edit.isUpdate ? "Update book" : "Add book"}
           </button>
         </form>
 
@@ -231,7 +281,9 @@ export default function Home() {
           <tbody>{bookTr}</tbody>
         </table>
       </div>
-      {(isLoading || createLoading) && <Spinner />}
+      {(isLoading || createLoading || isUpdateLoading || deleteIsLoading) && (
+        <Spinner />
+      )}
     </div>
   );
 }

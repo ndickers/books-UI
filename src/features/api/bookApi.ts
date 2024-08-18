@@ -15,6 +15,9 @@ export interface TIBook {
   year: number;
   user_id: number;
 }
+export type TUpdateBook = Omit<TIBook, "user_id"> & {
+  id: number | null;
+};
 export interface TPostBook {
   message: string;
   data: Array<{ id: number }>;
@@ -31,7 +34,7 @@ export const bookApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ["Books"],
+  tagTypes: ["Books", "Book"],
   endpoints: (builder) => ({
     getUserBooks: builder.query<TBookDetails, number>({
       query: (id: number) => `books/${id}`,
@@ -41,6 +44,15 @@ export const bookApi = createApi({
       query: (bookDetail) => ({
         url: "books",
         method: "POST",
+        body: bookDetail,
+      }),
+      invalidatesTags: ["Books"],
+    }),
+
+    updateBook: builder.mutation({
+      query: ({ id, bookDetail }) => ({
+        url: `/books/${id}`,
+        method: "PUT",
         body: bookDetail,
       }),
       invalidatesTags: ["Books"],
@@ -73,13 +85,18 @@ export const bookApi = createApi({
         body: resetDetails,
       }),
     }),
+    deleteBook: builder.mutation({
+      query: (id: number) => ({ url: `books/${id}`, method: "DELETE" }),
+    }),
   }),
 });
 
 export const {
   useRegisterUserMutation,
   useResetPassMutation,
+  useUpdateBookMutation,
   useCreateBookMutation,
+  useDeleteBookMutation,
   useUpdatePassMutation,
   useConfirmRegistrationMutation,
   useGetUserBooksQuery,
