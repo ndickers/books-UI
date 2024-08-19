@@ -25,14 +25,18 @@ export default function Login() {
     if (user !== null) {
       toast.success("Login successful");
       navigate("/books");
-    } else {
-      toast.error("Login failed");
     }
   }, [navigate, user]);
 
   async function handleLogin(data: FormData) {
-    const result = await dispatch(login(data)).unwrap();
-    console.log({ result });
+    try {
+      const result = await dispatch(login(data)).unwrap();
+      console.log({ result });
+    } catch (error) {
+      console.log({ error });
+
+      toast.error("Login failed");
+    }
   }
 
   console.log({ user, token, loading, error });
