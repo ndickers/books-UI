@@ -25,8 +25,6 @@ export default function Login() {
     if (user !== null) {
       toast.success("Login successful");
       navigate("/books");
-    } else {
-      toast.error("Login failed");
     }
   }, [navigate, user]);
 
