@@ -22,9 +22,11 @@ export default function Login() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   useEffect(() => {
-    if (user) {
+    if (user !== null) {
       toast.success("Login successful");
       navigate("/books");
+    } else {
+      toast.error("Login failed");
     }
   }, [navigate, user]);
 
@@ -56,7 +58,7 @@ export default function Login() {
             Or
           </div>
           <p className="text-center font-medium  text-red-500 my-4">
-            {error !== null && (error as string)}
+            {error !== null && typeof error !== "object" && (error as string)}
           </p>
           <form onSubmit={handleSubmit(handleLogin)} noValidate>
             <div className="grid gap-y-4">
