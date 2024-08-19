@@ -18,6 +18,7 @@ export const login = createAsyncThunk(
   async function (logins: TCredentials, thunkAPI) {
     try {
       const response = await axios.post("http://localhost:3000/login", logins);
+
       return { token: response.data.token, user: response.data.user };
     } catch (error) {
       if (axios.isAxiosError(error)) {

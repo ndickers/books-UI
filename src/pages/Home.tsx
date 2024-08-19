@@ -1,43 +1,153 @@
 import { useForm } from "react-hook-form";
+import {
+  useCreateBookMutation,
+  useDeleteBookMutation,
+  useGetUserBooksQuery,
+  useUpdateBookMutation,
+} from "../features/api/bookApi";
+import { useAppDispatch, useAppSelector } from "../app/hooks";
+import { logout } from "../features/Auth/AuthSlice";
+import Spinner from "../components/Spinner";
+import { toast } from "react-toastify";
+import { useState } from "react";
 
 interface TBook {
   title: string;
   author: string;
-  year: number;
+  year: number | null;
+}
+interface TUpdate {
+  isUpdate: boolean;
+  bookId: null | number;
+}
+export interface TUser {
+  id: number;
+  email: string;
+  userName: string;
 }
 export default function Home() {
+  const user: TUser | null = useAppSelector((state) => state.login.user)!;
+
+  const [updateBook, { error: updateError, isLoading: isUpdateLoading }] =
+    useUpdateBookMutation();
+  const [edit, setEdit] = useState<TUpdate>({
+    isUpdate: false,
+    bookId: null,
+  });
+  const {
+    data: books,
+    error,
+    isError,
+    isLoading,
+  } = useGetUserBooksQuery((user as TUser).id);
+  const [deleteBook, { isLoading: deleteIsLoading }] = useDeleteBookMutation();
+  const [createBook, { isLoading: createLoading }] = useCreateBookMutation();
+  const dispatch = useAppDispatch();
+
   const {
     handleSubmit,
+    reset,
     register,
     formState: { errors },
   } = useForm<TBook>();
 
-  function submitBook(data: TBook) {
-    console.log(data);
+  async function submitBook(data: TBook) {
+    data.year = Number(data.year);
+    if (edit.isUpdate) {
+      try {
+        await updateBook({ id: edit.bookId, bookDetail: data });
+        toast.success("Book updated successfully");
+        setEdit({ isUpdate: false, bookId: null });
+        reset({ author: "", title: "", year: null });
+      } catch (error) {
+        toast.error("Failed to update book ");
+        console.log(error);
+      }
+    } else {
+      const bookData = {
+        ...data,
+        user_id: (user as TUser).id,
+      };
+      try {
+        await createBook(bookData);
+        toast.success("Book created successfully");
+        reset();
+      } catch (error) {
+        console.log(error);
+        toast.error("Failed to add book ");
+      }
+    }
   }
+
+  if (isError) {
+    console.log({ error });
+    dispatch(logout());
+  }
+
+  const bookTr =
+    books &&
+    books.data.length !== 0 &&
+    books.data.map(
+      (book: { title: string; author: string; year: number; id: number }) => (
+        <tr key={book.id} className="border-2 border-gray-500">
+          <td className="td-style">{book.title}</td>
+          <td className="td-style">{book.author}</td>
+          <td className="td-style">{book.year}</td>
+          <td className="td-style">
+            <button
+              className="btn-style"
+              onClick={async () => {
+                try {
+                  await deleteBook(book.id);
+                } catch (error) {
+                  console.log(error);
+                }
+              }}
+            >
+              delete
+            </button>
+            <button
+              className="btn-style ml-1"
+              onClick={() => {
+                reset({
+                  title: book.title,
+                  author: book.author,
+                  year: book.year,
+                });
+                setEdit({ isUpdate: true, bookId: book.id });
+              }}
+            >
+              edit
+            </button>
+          </td>
+        </tr>
+      )
+    );
+  console.log({ updateError });
+
   return (
     <div className="bg-gray-900 w-full h-[100vh]">
       <header className="flex flex-wrap sm:justify-start sm:flex-nowrap w-full bg-white text-sm py-3 dark:bg-neutral-800">
         <nav className="max-w-[85rem] w-full mx-auto px-4 flex flex-wrap basis-full items-center justify-between">
           <a
-            className="sm:order-1 flex-none text-xl font-semibold dark:text-white focus:outline-none focus:opacity-80"
+            className="flex-none text-xl font-semibold dark:text-white focus:outline-none focus:opacity-80"
             href="#"
           >
             Books
           </a>
 
-          <button
-            type="button"
-            className="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 focus:outline-none focus:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-700 dark:focus:bg-neutral-700"
-          >
-            Button
-          </button>
-
-          <div
-            id="hs-navbar-alignment"
-            className="hs-collapse hidden overflow-hidden transition-all duration-300 basis-full grow sm:grow-0 sm:basis-auto sm:block sm:order-2"
-            aria-labelledby="hs-navbar-alignment-collapse"
-          ></div>
+          <div className="flex items-center justify-between gap-6">
+            <h1 className="dark:text-blue-50">{(user as TUser).userName}</h1>
+            <button
+              onClick={() => {
+                dispatch(logout());
+              }}
+              type="button"
+              className="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-800 shadow-sm hover:bg-gray-50 focus:outline-none focus:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-800 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-700 dark:focus:bg-neutral-700"
+            >
+              logout
+            </button>
+          </div>
         </nav>
       </header>
       <div className="max-w-[50rem] mx-auto">
@@ -131,32 +241,33 @@ export default function Home() {
           </div>
           <br />
           <button className="bg-blue-400 rounded-md text-white px-4 py-2">
-            submit
+            {edit.isUpdate ? "Update book" : "Add book"}
           </button>
         </form>
 
         <table className="w-full text-center">
           <thead>
-            <tr className="border-4 border-gray-600  ">
-              <th className="th-style">Title</th>
-              <th className="th-style">Author</th>
-              <th className="th-style">Year</th>
-              <th className="th-style">Actions</th>
-            </tr>
+            {isError ? (
+              <tr className="border-4 border-gray-600  ">
+                <th className="th-style">
+                  {error && "data" in error && (error as any).data?.message}
+                </th>
+              </tr>
+            ) : (
+              <tr className="border-4 border-gray-600  ">
+                <th className="th-style">Title</th>
+                <th className="th-style">Author</th>
+                <th className="th-style">Year</th>
+                <th className="th-style">Actions</th>
+              </tr>
+            )}
           </thead>
-          <tbody>
-            <tr className="border-2 border-gray-500">
-              <td className="td-style">title</td>
-              <td className="td-style">author</td>
-              <td className="td-style">2034</td>
-              <td className="td-style">
-                <button className="btn-style">delete</button>
-                <button className="btn-style ml-1">edit</button>
-              </td>
-            </tr>
-          </tbody>
+          <tbody>{bookTr}</tbody>
         </table>
       </div>
+      {(isLoading || createLoading || isUpdateLoading || deleteIsLoading) && (
+        <Spinner />
+      )}
     </div>
   );
 }
