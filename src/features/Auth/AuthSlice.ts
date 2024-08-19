@@ -17,7 +17,10 @@ export const login = createAsyncThunk(
   "login/user",
   async function (logins: TCredentials, thunkAPI) {
     try {
-      const response = await axios.post("http://localhost:3000/login", logins);
+      const response = await axios.post(
+        "https://books-api-rsnz.onrender.com/login",
+        logins
+      );
 
       return { token: response.data.token, user: response.data.user };
     } catch (error) {
