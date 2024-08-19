@@ -14,7 +14,7 @@ import { useState } from "react";
 interface TBook {
   title: string;
   author: string;
-  year: number;
+  year: number | null;
 }
 interface TUpdate {
   isUpdate: boolean;
@@ -28,7 +28,7 @@ export interface TUser {
 export default function Home() {
   const user: TUser | null = useAppSelector((state) => state.login.user)!;
 
-  const [updateBook, { isError: isUpdateError, isLoading: isUpdateLoading }] =
+  const [updateBook, { error: updateError, isLoading: isUpdateLoading }] =
     useUpdateBookMutation();
   const [edit, setEdit] = useState<TUpdate>({
     isUpdate: false,
@@ -41,15 +41,7 @@ export default function Home() {
     isLoading,
   } = useGetUserBooksQuery((user as TUser).id);
   const [deleteBook, { isLoading: deleteIsLoading }] = useDeleteBookMutation();
-  const [
-    createBook,
-    {
-      isError: createBookIsError,
-      error: createBookError,
-      isSuccess: createBookIsSuccess,
-      isLoading: createLoading,
-    },
-  ] = useCreateBookMutation();
+  const [createBook, { isLoading: createLoading }] = useCreateBookMutation();
   const dispatch = useAppDispatch();
 
   const {
@@ -61,13 +53,14 @@ export default function Home() {
 
   async function submitBook(data: TBook) {
     data.year = Number(data.year);
-
     if (edit.isUpdate) {
       try {
-        await updateBook({ id: edit.bookId, data });
+        await updateBook({ id: edit.bookId, bookDetail: data });
+        toast.success("Book updated successfully");
         setEdit({ isUpdate: false, bookId: null });
-        reset();
+        reset({ author: "", title: "", year: null });
       } catch (error) {
+        toast.error("Failed to update book ");
         console.log(error);
       }
     } else {
@@ -77,26 +70,18 @@ export default function Home() {
       };
       try {
         await createBook(bookData);
+        toast.success("Book created successfully");
         reset();
       } catch (error) {
         console.log(error);
+        toast.error("Failed to add book ");
       }
     }
-  }
-  if (isLoading) {
-    console.log("....");
   }
 
   if (isError) {
     console.log({ error });
     dispatch(logout());
-  }
-  if (createBookIsError) {
-    console.log(createBookError);
-    toast.error("Failed to add book ");
-  }
-  if (createBookIsSuccess) {
-    toast.success("Book created successfully");
   }
 
   const bookTr =
@@ -113,8 +98,7 @@ export default function Home() {
               className="btn-style"
               onClick={async () => {
                 try {
-                  const result = await deleteBook(book.id).unwrap();
-                  console.log({ delete: result });
+                  await deleteBook(book.id);
                 } catch (error) {
                   console.log(error);
                 }
@@ -139,7 +123,7 @@ export default function Home() {
         </tr>
       )
     );
-  console.log(user);
+  console.log({ updateError });
 
   return (
     <div className="bg-gray-900 w-full h-[100vh]">

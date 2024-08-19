@@ -22,9 +22,11 @@ export default function Login() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   useEffect(() => {
-    if (user) {
+    if (user !== null) {
       toast.success("Login successful");
       navigate("/books");
+    } else {
+      toast.error("Login failed");
     }
   }, [navigate, user]);
 

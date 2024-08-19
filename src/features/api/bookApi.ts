@@ -12,7 +12,7 @@ export interface TBookDetails {
 export interface TIBook {
   title: string;
   author: string;
-  year: number;
+  year: number | null;
   user_id: number;
 }
 export type TUpdateBook = Omit<TIBook, "user_id"> & {
@@ -22,19 +22,25 @@ export interface TPostBook {
   message: string;
   data: Array<{ id: number }>;
 }
+
 export const bookApi = createApi({
   reducerPath: "booksApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:3000/",
+    baseUrl: "https://books-api-rsnz.onrender.com/",
     prepareHeaders: (headers, { getState, endpoint }) => {
-      if (endpoint === "getUserBooks" || endpoint === "createBook") {
+      if (
+        endpoint === "getUserBooks" ||
+        endpoint === "createBook" ||
+        endpoint === "deleteBook" ||
+        endpoint === "updateBook"
+      ) {
         const token = (getState() as any).login.token as string;
         headers.set("Authorization", token);
       }
       return headers;
     },
   }),
-  tagTypes: ["Books", "Book"],
+  tagTypes: ["Books"],
   endpoints: (builder) => ({
     getUserBooks: builder.query<TBookDetails, number>({
       query: (id: number) => `books/${id}`,
@@ -55,6 +61,10 @@ export const bookApi = createApi({
         method: "PUT",
         body: bookDetail,
       }),
+      invalidatesTags: ["Books"],
+    }),
+    deleteBook: builder.mutation({
+      query: (id: number) => ({ url: `books/${id}`, method: "DELETE" }),
       invalidatesTags: ["Books"],
     }),
     registerUser: builder.mutation<{ message: string }, any>({
@@ -84,9 +94,6 @@ export const bookApi = createApi({
         method: "PUT",
         body: resetDetails,
       }),
-    }),
-    deleteBook: builder.mutation({
-      query: (id: number) => ({ url: `books/${id}`, method: "DELETE" }),
     }),
   }),
 });
