@@ -29,8 +29,13 @@ export default function Login() {
   }, [navigate, user]);
 
   async function handleLogin(data: FormData) {
-    const result = await dispatch(login(data)).unwrap();
-    console.log({ result });
+    try {
+      const result = await dispatch(login(data)).unwrap();
+      console.log({ result });
+    } catch (error) {
+      toast.error("Login failed");
+      console.log({ error });
+    }
   }
 
   console.log({ user, token, loading, error });
