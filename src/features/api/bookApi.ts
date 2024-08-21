@@ -26,7 +26,8 @@ export interface TPostBook {
 export const bookApi = createApi({
   reducerPath: "booksApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "books-ke-fahabjdmdxe6gsb0.southafricanorth-01.azurewebsites.net/",
+    baseUrl:
+      "https://books-ke-fahabjdmdxe6gsb0.southafricanorth-01.azurewebsites.net/",
     prepareHeaders: (headers, { getState, endpoint }) => {
       if (
         endpoint === "getUserBooks" ||
