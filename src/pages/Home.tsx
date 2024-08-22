@@ -10,7 +10,6 @@ import { logout } from "../features/Auth/AuthSlice";
 import Spinner from "../components/Spinner";
 import { toast } from "react-toastify";
 import { useState } from "react";
-
 interface TBook {
   title: string;
   author: string;
@@ -28,6 +27,8 @@ export interface TUser {
 export default function Home() {
   const user: TUser | null = useAppSelector((state) => state.login.user)!;
 
+  const userId = user !== null ? (user as TUser).id : null;
+  const userName = user !== null ? (user as TUser).userName : null;
   const [updateBook, { error: updateError, isLoading: isUpdateLoading }] =
     useUpdateBookMutation();
   const [edit, setEdit] = useState<TUpdate>({
@@ -39,7 +40,7 @@ export default function Home() {
     error,
     isError,
     isLoading,
-  } = useGetUserBooksQuery((user as TUser).id);
+  } = useGetUserBooksQuery(Number(userId));
   const [deleteBook, { isLoading: deleteIsLoading }] = useDeleteBookMutation();
   const [createBook, { isLoading: createLoading }] = useCreateBookMutation();
   const dispatch = useAppDispatch();
@@ -84,10 +85,11 @@ export default function Home() {
     dispatch(logout());
   }
 
+  console.log({ login: books });
+
   const bookTr =
-    books &&
-    books.data.length !== 0 &&
-    books.data.map(
+    books?.data.length !== 0 &&
+    books?.data?.map(
       (book: { title: string; author: string; year: number; id: number }) => (
         <tr key={book.id} className="border-2 border-gray-500">
           <td className="td-style">{book.title}</td>
@@ -137,7 +139,7 @@ export default function Home() {
           </a>
 
           <div className="flex items-center justify-between gap-6">
-            <h1 className="dark:text-blue-50">{(user as TUser).userName}</h1>
+            <h1 className="dark:text-blue-50">{userName}</h1>
             <button
               onClick={() => {
                 dispatch(logout());
@@ -247,10 +249,10 @@ export default function Home() {
 
         <table className="w-full text-center">
           <thead>
-            {isError ? (
+            {books?.data.length === 0 ? (
               <tr className="border-4 border-gray-600  ">
-                <th className="th-style">
-                  {error && "data" in error && (error as any).data?.message}
+                <th className="th-style text-center">
+                  No book added currently
                 </th>
               </tr>
             ) : (
@@ -262,7 +264,7 @@ export default function Home() {
               </tr>
             )}
           </thead>
-          <tbody>{bookTr}</tbody>
+          {books?.data.length !== 0 && <tbody>{bookTr}</tbody>}
         </table>
       </div>
       {(isLoading || createLoading || isUpdateLoading || deleteIsLoading) && (

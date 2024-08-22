@@ -30,7 +30,7 @@ export default function Login() {
 
   async function handleLogin(data: FormData) {
     try {
-      const result = await dispatch(login(data)).unwrap();
+      const result = await dispatch(login(data));
       console.log({ result });
     } catch (error) {
       toast.error("Login failed");

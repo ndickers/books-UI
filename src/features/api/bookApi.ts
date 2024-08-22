@@ -23,6 +23,8 @@ export interface TPostBook {
   data: Array<{ id: number }>;
 }
 
+//https://books-ke-fahabjdmdxe6gsb0.southafricanorth-01.azurewebsites.net/
+
 export const bookApi = createApi({
   reducerPath: "booksApi",
   baseQuery: fetchBaseQuery({

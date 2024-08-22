@@ -6,5 +6,5 @@ export default function ProtectedRoutes() {
 
   console.log(token);
 
-  return <>{token ? <Outlet /> : <Navigate to="/login" />}</>;
+  return <>{token !== null ? <Outlet /> : <Navigate to="/login" />}</>;
 }
