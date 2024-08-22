@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useUpdatePassMutation } from "../features/api/bookApi";
 import { toast } from "react-toastify";
 import Spinner from "../components/Spinner";
@@ -16,6 +16,8 @@ export default function PassReset() {
     formState: { errors },
     watch,
   } = useForm<FormData>();
+  const navigate = useNavigate();
+
   const [passMatch, setPassMatch] = useState<string | undefined>(undefined);
   const [updatePass, { data: response, error, isError, isLoading, isSuccess }] =
     useUpdatePassMutation();
@@ -44,6 +46,7 @@ export default function PassReset() {
   }
   if (isSuccess) {
     toast.success(response.message);
+    navigate("/login");
   }
   if (isError) {
     toast.error((error as any).data.error);
